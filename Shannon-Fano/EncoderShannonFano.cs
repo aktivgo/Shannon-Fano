@@ -8,32 +8,23 @@ namespace Shannon_Fano
 {
     public static class EncoderShannonFano
     {
-        private static readonly Dictionary<char, string> ResultTable = new Dictionary<char, string>();
-        private static readonly List<string> Codes = new List<string>();
+        private static Dictionary<char, string> ResultTable;
+        private static List<string> Codes;
 
         public static Dictionary<char, string> GetResultTable()
         {
             return ResultTable;
         }
 
-        private static void InitResultTable(string str)
-        {
-            foreach (var character in str)
-            {
-                if (ResultTable.ContainsKey(character)) continue;
-                ResultTable.Add(character, "");
-            }
-        }
-
         private static void InitCodes(string str)
         {
+            Codes = new List<string>();
             for (int i = 0; i < str.Length; i++)
             {
                 Codes.Add("");
-
             }
         }
-        
+
         private static Dictionary<char, double> GetCharsProbability(string str)
         {
             Dictionary<char, double> result = new Dictionary<char, double>();
@@ -56,7 +47,7 @@ namespace Shannon_Fano
 
             return result;
         }
-        
+
         private static void RecursiveCreateTable(List<double> p, int start, int end)
         {
             if (Math.Abs(start - end) <= 1)
@@ -112,23 +103,32 @@ namespace Shannon_Fano
 
         private static void WriteResultToFile(string str, string encode)
         {
-            FileStream stream = new FileStream("decode/test_" + str.Substring(0, 5) + ".txt", FileMode.Create, FileAccess.ReadWrite);
-            StreamWriter writer = new StreamWriter(stream);
-            writer.WriteLine(encode);
-            foreach (var item in ResultTable)
+            string path = "decode/";
+            string fileName = "test_" + str.Substring(0, 5) + ".txt";
+
+            using (FileStream fstream = new FileStream(path + fileName, FileMode.OpenOrCreate))
             {
-                writer.WriteLine(item.Key + " " + item.Value);
+                byte[] array = Encoding.Default.GetBytes(encode + "\r\n");
+                fstream.Write(array, 0, array.Length);
+                string table = "";
+                foreach (var item in ResultTable)
+                {
+                    table += item.Key + " " + item.Value + "\r\n";
+                }
+
+                table = table.Remove(table.Length - 2);
+                array = Encoding.Default.GetBytes(table);
+                fstream.Write(array, 0, array.Length);
             }
-            stream.Close();
-            
-            Console.WriteLine("Результат сохранен в файл test_" + str.Substring(0, 5) + ".txt");
+
+            Console.WriteLine("Результат сохранен в файл " + fileName);
         }
 
         public static string Encode(string inputStr)
         {
-            InitResultTable(inputStr);
+            ResultTable = new Dictionary<char, string>();
             InitCodes(inputStr);
-            
+
             Dictionary<char, double> probabilities = GetCharsProbability(inputStr);
             probabilities = probabilities.OrderByDescending(pair => pair.Value)
                 .ToDictionary(pair => pair.Key, pair => pair.Value);
@@ -137,7 +137,14 @@ namespace Shannon_Fano
 
             for (int i = 0; i < probabilities.Count; i++)
             {
-                ResultTable[probabilities.Keys.ToArray()[i]] = Codes[i];
+                char character = probabilities.Keys.ToArray()[i];
+                if (char.IsWhiteSpace(character))
+                {
+                    ResultTable.Add('&', Codes[i]);
+                    continue;
+                }
+
+                ResultTable.Add(probabilities.Keys.ToArray()[i], Codes[i]);
             }
 
             string encode = "";
