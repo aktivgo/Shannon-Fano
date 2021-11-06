@@ -88,7 +88,7 @@ namespace Shannon_Fano
             StreamReader reader = new StreamReader(stream, Encoding.Default);
             string textFromFile = reader.ReadToEnd();
             stream.Close();
-            Console.WriteLine("Входные данные:\n" + textFromFile + "\n");
+            Console.WriteLine("Входные данные:\n" + textFromFile.Replace("&", " ") + "\n");
             char[] separators = { '\n', '\r' };
             string[] textAr = textFromFile.Split(separators, StringSplitOptions.RemoveEmptyEntries);
             Dictionary<string, char> table = new Dictionary<string, char>();

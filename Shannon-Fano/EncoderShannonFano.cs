@@ -46,19 +46,27 @@ namespace Shannon_Fano
 
             foreach (var character in str)
             {
+                if (char.IsWhiteSpace(character))
+                {
+                    if (!result.ContainsKey('&'))
+                    {
+                        result.Add('&', 1);
+                    }
+                    else
+                    {
+                        result['&']++;
+                    }
+                    continue;
+                }
+
                 if (result.ContainsKey(character))
                 {
                     result[character]++;
-                    continue;
                 }
-
-                if (char.IsWhiteSpace(character))
+                else
                 {
-                    result.Add('&', 1);
-                    continue;
+                    result.Add(character, 1);
                 }
-
-                result.Add(character, 1);
             }
 
             foreach (char key in result.Keys.ToArray())
@@ -159,13 +167,17 @@ namespace Shannon_Fano
             for (int i = 0; i < probabilities.Count; i++)
             {
                 char character = probabilities.Keys.ToArray()[i];
-                if (char.IsWhiteSpace(character))
+
+                if (char.IsWhiteSpace(character) && !_resultTable.ContainsKey('&'))
                 {
                     _resultTable.Add('&', _codes[i]);
                     continue;
                 }
 
-                _resultTable.Add(probabilities.Keys.ToArray()[i], _codes[i]);
+                if (!_resultTable.ContainsKey(character))
+                {
+                    _resultTable.Add(character, _codes[i]);
+                }
             }
 
             CalculateCodingPrice(probabilities);
@@ -178,6 +190,7 @@ namespace Shannon_Fano
                     encode += _codes[probabilities.Keys.ToList().IndexOf('&')];
                     continue;
                 }
+
                 encode += _codes[probabilities.Keys.ToList().IndexOf(character)];
             }
 
