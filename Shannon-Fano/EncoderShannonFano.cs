@@ -52,7 +52,7 @@ namespace Shannon_Fano
                     continue;
                 }
 
-                if (char.IsWhiteSpace(character))
+                if (char.IsWhiteSpace(character) && !result.ContainsKey('&'))
                 {
                     result.Add('&', 1);
                     continue;
@@ -178,6 +178,7 @@ namespace Shannon_Fano
                     encode += _codes[probabilities.Keys.ToList().IndexOf('&')];
                     continue;
                 }
+
                 encode += _codes[probabilities.Keys.ToList().IndexOf(character)];
             }
 
