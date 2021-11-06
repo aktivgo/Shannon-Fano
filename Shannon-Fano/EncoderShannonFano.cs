@@ -8,20 +8,35 @@ namespace Shannon_Fano
 {
     public static class EncoderShannonFano
     {
-        private static Dictionary<char, string> ResultTable;
-        private static List<string> Codes;
+        private static Dictionary<char, string> _resultTable;
+        private static List<string> _codes;
+        private static double _codingPrice;
 
         public static Dictionary<char, string> GetResultTable()
         {
-            return ResultTable;
+            return _resultTable;
         }
 
         private static void InitCodes(string str)
         {
-            Codes = new List<string>();
+            _codes = new List<string>();
             for (int i = 0; i < str.Length; i++)
             {
-                Codes.Add("");
+                _codes.Add("");
+            }
+        }
+
+        public static double GetCodingPrice()
+        {
+            return _codingPrice;
+        }
+
+        private static void CalculateCodingPrice(Dictionary<char, double> probabilities)
+        {
+            _codingPrice = 0;
+            foreach (var item in probabilities)
+            {
+                _codingPrice += item.Value * _resultTable[item.Key].Length;
             }
         }
 
@@ -34,6 +49,12 @@ namespace Shannon_Fano
                 if (result.ContainsKey(character))
                 {
                     result[character]++;
+                    continue;
+                }
+
+                if (char.IsWhiteSpace(character))
+                {
+                    result.Add('&', 1);
                     continue;
                 }
 
@@ -59,12 +80,12 @@ namespace Shannon_Fano
 
             for (int i = start; i < index; i++)
             {
-                Codes[i] += "1";
+                _codes[i] += "1";
             }
 
             for (int i = index; i < end; i++)
             {
-                Codes[i] += "0";
+                _codes[i] += "0";
             }
 
             RecursiveCreateTable(p, start, index);
@@ -111,7 +132,7 @@ namespace Shannon_Fano
                 byte[] array = Encoding.Default.GetBytes(encode + "\r\n");
                 fstream.Write(array, 0, array.Length);
                 string table = "";
-                foreach (var item in ResultTable)
+                foreach (var item in _resultTable)
                 {
                     table += item.Key + " " + item.Value + "\r\n";
                 }
@@ -126,7 +147,7 @@ namespace Shannon_Fano
 
         public static string Encode(string inputStr)
         {
-            ResultTable = new Dictionary<char, string>();
+            _resultTable = new Dictionary<char, string>();
             InitCodes(inputStr);
 
             Dictionary<char, double> probabilities = GetCharsProbability(inputStr);
@@ -140,17 +161,24 @@ namespace Shannon_Fano
                 char character = probabilities.Keys.ToArray()[i];
                 if (char.IsWhiteSpace(character))
                 {
-                    ResultTable.Add('&', Codes[i]);
+                    _resultTable.Add('&', _codes[i]);
                     continue;
                 }
 
-                ResultTable.Add(probabilities.Keys.ToArray()[i], Codes[i]);
+                _resultTable.Add(probabilities.Keys.ToArray()[i], _codes[i]);
             }
+
+            CalculateCodingPrice(probabilities);
 
             string encode = "";
             foreach (var character in inputStr)
             {
-                encode += Codes[probabilities.Keys.ToList().IndexOf(character)];
+                if (char.IsWhiteSpace(character))
+                {
+                    encode += _codes[probabilities.Keys.ToList().IndexOf('&')];
+                    continue;
+                }
+                encode += _codes[probabilities.Keys.ToList().IndexOf(character)];
             }
 
             WriteResultToFile(inputStr, encode);

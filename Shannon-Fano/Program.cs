@@ -77,7 +77,8 @@ namespace Shannon_Fano
             {
                 Console.WriteLine((item.Key == '&' ? " " : item.Key.ToString()) + " " + item.Value);
             }
-
+            Console.WriteLine();
+            Console.WriteLine("Цена кодирования: " + EncoderShannonFano.GetCodingPrice());
             Console.WriteLine();
         }
 
